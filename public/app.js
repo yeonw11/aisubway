@@ -1,7 +1,13 @@
 const LINES={1001:["1호선","#0052A4"],1002:["2호선","#00A84D"],1003:["3호선","#EF7C1C"],1004:["4호선","#00A5DE"],1005:["5호선","#996CAC"],1006:["6호선","#CD7C2F"],1007:["7호선","#747F00"],1008:["8호선","#E6186C"],1009:["9호선","#BDB092"],1063:["경의중앙선","#77C4A3"],1065:["공항철도","#0090D2"],1067:["경춘선","#178C72"],1075:["수인분당선","#F5A200"],1077:["신분당선","#D4003B"],1092:["우이신설선","#B0CE18"],1032:["GTX-A","#9A6292"]};
 const $=s=>document.querySelector(s),ln=t=>(LINES[t.subwayId]||["기타","#8aa0bd"])[0],lc=t=>(LINES[t.subwayId]||["기타","#8aa0bd"])[1];
 const S={trains:[],line:null,q:"",station:null,sort:["seconds",1],page:0,prev:new Map(),hover:null,stats:null},PER=15,BASE="#38bdf8";
-const fmt=s=>s>0?`${Math.floor(s/60)}분 ${String(s%60).padStart(2,"0")}초`:"N/A";
+const fmt = s => {
+  if (s > 0) {
+    return `${Math.floor(s / 60)}분 ${String(s % 60).padStart(2, "0")}초`;
+  }
+
+  return "도착/진입 중";
+};
 const setAccent=c=>document.documentElement.style.setProperty("--active-line-color",c||BASE);
 const el=(t,a={},h="")=>Object.assign(document.createElement(t),a,{innerHTML:h});
 const view=()=>S.trains.filter(t=>(!S.line||ln(t)===S.line)&&(!S.q||t.station.includes(S.q)));
@@ -44,7 +50,14 @@ function countTo(node,val,txt){const k=node.dataset.k,from=kpiPrev[k]||0;kpiPrev
   const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/600);node.textContent=Math.round(from+(val-from)*p);if(p<1)requestAnimationFrame(f);else node.textContent=txt})(t0)}
 function renderKpi(){
   const v=view(),ok=v.filter(t=>t.seconds>0),min=ok.reduce((a,t)=>Math.min(a,t.seconds),1e9);
-  const items=[["수집된 도착정보",v.length,null,"현재 필터 기준"],["데이터가 있는 역",new Set(v.map(t=>t.station)).size,null,"고유 역명"],["포함된 노선",new Set(v.map(ln)).size,null,"고유 호선"],["가장 빠른 도착",min<1e9?min:0,min<1e9?fmt(min):"N/A","API 도착 예정 초 값"],["5분 이내 도착",ok.filter(t=>t.seconds<=300).length,null,"도착 예정 300초 이하"]];
+  const items=[["수집된 도착정보",v.length,null,"현재 필터 기준"],["데이터가 있는 역",new Set(v.map(t=>t.station)).size,null,"고유 역명"],["포함된 노선",new Set(v.map(ln)).size,null,"고유 호선"],[
+  "가장 빠른 도착",
+  min < 1e9 ? min : 0,
+  min < 1e9
+    ? fmt(min)
+    : (v.length ? "도착/진입 중" : "N/A"),
+  "API 도착 예정 초 값"
+],["5분 이내 도착",ok.filter(t=>t.seconds<=300).length,null,"도착 예정 300초 이하"]];
   if(!$("#kpis").children.length)$("#kpis").innerHTML=items.map((_,i)=>`<div class="kpi"><span></span><b data-k="${i}"></b><small></small></div>`).join("");
   [...$("#kpis").children].forEach((c,i)=>{const [a,val,txt,sub]=items[i];c.querySelector("span").textContent=a;c.querySelector("small").textContent=sub;countTo(c.querySelector("b"),val,txt??String(val))})
 }
