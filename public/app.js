@@ -76,7 +76,41 @@ function renderTable(){
   S.prev=nxt;$("#pgi").textContent=`${S.page+1} / ${pages} (${rows.length}건)`;
 }
 $("#prev").onclick=()=>{S.page=Math.max(0,S.page-1);renderTable()};$("#next").onclick=()=>{S.page++;renderTable()};
-$("#q").oninput=e=>{S.q=e.target.value.trim();S.page=0;render()};
+$("#q").oninput = e => {
+  const q = e.target.value.trim();
+
+  S.q = q;
+  S.page = 0;
+
+  // 검색어를 지우면 전체 보기로 복귀
+  if (!q) {
+    S.station = null;
+    render();
+    return;
+  }
+
+  const stations = [...new Set(S.trains.map(t => t.station))];
+
+  // 정확히 같은 역명 우선
+  const exact = stations.find(
+    s => s.toLowerCase() === q.toLowerCase()
+  );
+
+  if (exact) {
+    S.station = exact;
+  } else {
+    // 부분 검색 결과가 1개뿐이면 자동 선택
+    const matches = stations.filter(
+      s => s.toLowerCase().includes(q.toLowerCase())
+    );
+
+    if (matches.length === 1) {
+      S.station = matches[0];
+    }
+  }
+
+  render();
+};
 function pick(st){S.station=st;render();$("#stTitle").scrollIntoView({behavior:"smooth"})}
 
 // 노선 개략도
