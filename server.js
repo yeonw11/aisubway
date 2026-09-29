@@ -32,7 +32,6 @@ app.get("/api/config-check", (req, res) => {
     seoulApiKey: SEOUL_API_KEY ? "configured" : "missing"
   });
 });
-
 /* =========================
    CACHE
 ========================= */
@@ -43,46 +42,7 @@ let subwayCacheTime = 0;
 const CACHE_MS = 30000;
 
 /* =========================
-   서울시 API 한 구간 요청
-========================= */
-
-async function fetchRange(start, end) {
-  const url =
-    `http://swopenapi.seoul.go.kr/api/subway/` +
-    `${SEOUL_API_KEY}/json/realtimeStationArrival/${start}/${end}/`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(
-      `Seoul API HTTP ${response.status} (${start}-${end})`
-    );
-  }
-
-  const data = await response.json();
-
-  if (!data || typeof data !== "object") {
-    throw new Error(
-      `Invalid Seoul API response (${start}-${end})`
-    );
-  }
-
-  if (
-    data.errorMessage &&
-    data.errorMessage.code &&
-    data.errorMessage.code !== "INFO-000"
-  ) {
-    throw new Error(
-      `${data.errorMessage.code}: ${data.errorMessage.message}`
-    );
-  }
-
-  return data;
-}
-
-/* =========================
-   전체 실시간 데이터 요청
-   서울시 제한: 1회 최대 1000건
+   SEOUL SUBWAY API
 ========================= */
 
 async function fetchSubwayData() {
@@ -90,7 +50,7 @@ async function fetchSubwayData() {
     throw new Error("SEOUL_API_KEY is not configured");
   }
 
-  // 30초 캐시
+  // 30초 동안은 기존 전체 데이터 재사용
   if (
     subwayCache &&
     Date.now() - subwayCacheTime < CACHE_MS
@@ -98,8 +58,22 @@ async function fetchSubwayData() {
     return subwayCache;
   }
 
-  // 첫 1000건
-  const firstData = await fetchRange(0, 1000);
+  const chunkSize = 100;
+
+  // 첫 100건
+  const firstUrl =
+    `http://swopenapi.seoul.go.kr/api/subway/` +
+    `${SEOUL_API_KEY}/json/realtimeStationArrival/0/100/`;
+
+  const firstResponse = await fetch(firstUrl);
+
+  if (!firstResponse.ok) {
+    throw new Error(
+      `Seoul API HTTP ${firstResponse.status}`
+    );
+  }
+
+  const firstData = await firstResponse.json();
 
   const firstList = Array.isArray(
     firstData.realtimeArrivalList
@@ -109,11 +83,11 @@ async function fetchSubwayData() {
 
   if (!firstList.length) {
     throw new Error(
+      firstData?.errorMessage?.message ||
       "Seoul API returned an empty first page"
     );
   }
 
-  // 전체 건수
   const totalCount =
     Number(firstData.errorMessage?.total) ||
     Number(firstList[0]?.totalCount) ||
@@ -121,41 +95,39 @@ async function fetchSubwayData() {
 
   let allList = [...firstList];
 
-  // 1000건을 넘는 경우 나머지 페이지 생성
-  const requests = [];
-
+  // 나머지 데이터를 100건씩 순서대로 추가
   for (
-    let start = 1000;
+    let start = chunkSize;
     start < totalCount;
-    start += 1000
+    start += chunkSize
   ) {
     const end = Math.min(
-      start + 1000,
+      start + chunkSize,
       totalCount
     );
 
-    requests.push(
-      fetchRange(start, end)
-    );
-  }
+    const url =
+      `http://swopenapi.seoul.go.kr/api/subway/` +
+      `${SEOUL_API_KEY}/json/realtimeStationArrival/${start}/${end}/`;
 
-  // 나머지 페이지 병렬 요청
-  const pages = await Promise.all(requests);
+    const response = await fetch(url);
 
-  for (const page of pages) {
-    if (
-      Array.isArray(page.realtimeArrivalList)
-    ) {
-      allList.push(
-        ...page.realtimeArrivalList
+    if (!response.ok) {
+      console.error(
+        `Seoul API range failed: ${start}-${end}`
       );
+      continue;
     }
-  }
 
-  if (!allList.length) {
-    throw new Error(
-      "No subway arrival data received"
-    );
+    const data = await response.json();
+
+    const list = Array.isArray(
+      data.realtimeArrivalList
+    )
+      ? data.realtimeArrivalList
+      : [];
+
+    allList.push(...list);
   }
 
   subwayCache = {
@@ -170,7 +142,6 @@ async function fetchSubwayData() {
 
   return subwayCache;
 }
-
 /* =========================
    DEBUG
 ========================= */
