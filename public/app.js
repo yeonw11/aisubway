@@ -83,15 +83,21 @@ function renderTable(){
   S.prev=nxt;$("#pgi").textContent=`${S.page+1} / ${pages} (${rows.length}건)`;
 }
 $("#q").oninput = e => {
-  const q = e.target.value.trim();
+  const input = e.target.value.trim();
 
-  S.q = q;
+  // "회기역"처럼 입력해도 "회기"로 검색
+  const q = input.endsWith("역")
+    ? input.slice(0, -1).trim()
+    : input;
+
   S.page = 0;
 
-  // 검색어를 지우면 전체 보기
+  // 검색어 삭제 → 전체 보기
   if (!q) {
+    S.q = "";
     S.station = null;
     S.line = null;
+
     setAccent(null);
 
     const badge = $("#lineBadge");
@@ -106,10 +112,12 @@ $("#q").oninput = e => {
 
   const stations = [...new Set(S.trains.map(t => t.station))];
 
+  // 정확히 일치하는 역
   const exact = stations.find(
     s => s.toLowerCase() === q.toLowerCase()
   );
 
+  // 부분 검색
   const matches = stations.filter(
     s => s.toLowerCase().includes(q.toLowerCase())
   );
@@ -118,26 +126,42 @@ $("#q").oninput = e => {
     exact || (matches.length === 1 ? matches[0] : null);
 
   if (selectedStation) {
+
+    // 실제 역명으로 필터
+    S.q = selectedStation;
     S.station = selectedStation;
 
     const stationTrains = S.trains.filter(
       t => t.station === selectedStation
     );
 
+    // 검색 시 특정 한 노선으로 데이터를 잘라버리지 않음
+    // → 환승역이면 모든 노선의 도착정보 표시
+    S.line = null;
+
     if (stationTrains.length) {
-      const selectedLine = ln(stationTrains[0]);
+      const lines = [...new Set(stationTrains.map(ln))];
+      const primaryLine = lines[0];
 
-      S.line = selectedLine;
-
-      setAccent(colorOf(selectedLine));
+      // 검색 완료 느낌을 주기 위해 대표 호선 색 적용
+      setAccent(colorOf(primaryLine));
 
       const badge = $("#lineBadge");
 
       if (badge) {
         badge.hidden = false;
-        badge.textContent = selectedLine;
+
+        badge.textContent =
+          lines.length > 1
+            ? lines.join(" · ")
+            : primaryLine;
       }
     }
+
+  } else {
+
+    // 아직 입력 중일 때
+    S.q = q;
   }
 
   render();
