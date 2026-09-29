@@ -37,16 +37,15 @@
       <h2>노선 현황 <small>(개략도 · 위치 비례 아님)</small></h2>
       <div class="mapwrap"><svg id="map" viewBox="0 0 700 260"></svg></div>
     </section>
-    <section class="panel">
-      <h2>실시간 도착정보</h2>
-      <div class="tw"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-      <div class="pg"><button id="prev">이전</button><span id="pgi" class="mono"></span><button id="next">다음</button></div>
-    </section>
     <section class="panel"><h2 id="stTitle">현재역 정보</h2><div id="detail"></div>
       </section>
     <section class="panel"><h2>시각화</h2><div class="viz"><div><h3>노선별 열차 수</h3><div id="v1"></div></div><div><h3>도착 예정 분포</h3><div id="v2"></div></div><div><h3>데이터 많은 역 Top 10</h3><div id="v3"></div></div></div></section>
   </div>
-  <aside class="panel ai"><h2>CLAUDE AI <small>Live Arrival Analysis</small></h2><div id="target" class="mono"></div><button id="run">실시간 도착정보 분석</button><div id="out" class="out">분석할 역을 선택한 뒤 버튼을 누르세요.</div><div id="tags"></div><h3>최근 분석 이력</h3><ul id="hist"></ul></aside>
+  <aside class="panel side-arrivals">
+  <h2>선택 역 실시간 도착정보</h2>
+  <div id="sideStation" class="side-station-title">역을 검색하세요</div>
+  <div id="sideArrivals" class="side-arrivals-list"></div>
+</aside>
 </main>
 <footer class="ft">Designed &amp; Developed by <span class="mono">차이나데이터큐레이션전공 조연우 · 202302367</span></footer>
 <div id="tip" class="tip" hidden></div>
