@@ -1,11 +1,55 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Subway Dashboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Subway Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>AI Subway Dashboard</h1>
-  <p>정상적으로 배포되었습니다.</p>
+<header class="hd">
+  <div><h1>AI SUBWAY</h1><small>Seoul Metro Live Arrival Dashboard</small></div>
+  <span id="lineBadge" class="badge" hidden></span>
+  <div class="hr"><span id="live" class="live">CONNECTING</span><span>업데이트 <b id="upd" class="mono">--:--:--</b></span><span>현재 <b id="clock" class="mono"></b></span><button id="refresh">새로고침</button></div>
+</header>
+<svg class="city" viewBox="0 0 680 160" preserveAspectRatio="xMidYMid slice" width="100%" aria-hidden="true">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#060a14"/><stop offset="1" stop-color="#132340"/></linearGradient></defs>
+  <rect width="680" height="160" fill="url(#sky)"/>
+  <g class="px1"><circle cx="600" cy="30" r="12" fill="#e2e8f0" opacity=".85"/>
+    <circle cx="60" cy="22" r="2" fill="#fff"><animate attributeName="opacity" values=".2;1;.2" dur="3.1s" repeatCount="indefinite"/></circle>
+    <circle cx="180" cy="40" r="1.6" fill="#fff"><animate attributeName="opacity" values=".2;1;.2" dur="4.6s" repeatCount="indefinite"/></circle>
+    <circle cx="330" cy="18" r="2" fill="#fff"><animate attributeName="opacity" values=".2;1;.2" dur="2.3s" repeatCount="indefinite"/></circle>
+    <circle cx="470" cy="45" r="1.5" fill="#fff"><animate attributeName="opacity" values=".2;1;.2" dur="5.8s" repeatCount="indefinite"/></circle></g>
+  <g class="px2" fill="#0f1929" id="bld"></g>
+  <rect y="138" width="680" height="3" fill="#334155"/>
+  <g><rect x="-80" y="126" width="70" height="10" rx="3" fill="#00A84D"><animate attributeName="x" from="-80" to="700" dur="7s" repeatCount="indefinite"/></rect>
+     <rect x="-80" y="126" width="70" height="10" rx="3" fill="#BDB092" opacity=".9"><animate attributeName="x" from="-80" to="700" dur="12s" begin="5s" repeatCount="indefinite"/></rect>
+     <rect x="700" y="126" width="60" height="10" rx="3" fill="#996CAC"><animate attributeName="x" from="700" to="-80" dur="18s" begin="3s" repeatCount="indefinite"/></rect></g>
+</svg>
+<div id="notice" class="notice" hidden>실시간 데이터는 배포 환경에서 연결됩니다.</div>
+<section class="kpis" id="kpis"></section>
+<main class="grid">
+  <div class="col">
+    <section class="panel">
+      <div class="bar"><input id="q" placeholder="역명을 입력하세요"><div id="filters" class="chips"></div></div>
+      <h2>노선 현황 <small>(개략도 · 위치 비례 아님)</small></h2>
+      <div class="mapwrap"><svg id="map" viewBox="0 0 700 260"></svg></div>
+    </section>
+    <section class="panel">
+      <h2>실시간 도착정보</h2>
+      <div class="tw"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+      <div class="pg"><button id="prev">이전</button><span id="pgi" class="mono"></span><button id="next">다음</button></div>
+    </section>
+    <section class="panel"><h2 id="stTitle">현재역 정보</h2><div id="detail"></div>
+      </section>
+    <section class="panel"><h2>시각화</h2><div class="viz"><div><h3>노선별 열차 수</h3><div id="v1"></div></div><div><h3>도착 예정 분포</h3><div id="v2"></div></div><div><h3>데이터 많은 역 Top 10</h3><div id="v3"></div></div></div></section>
+  </div>
+  <aside class="panel ai"><h2>CLAUDE AI <small>Live Arrival Analysis</small></h2><div id="target" class="mono"></div><button id="run">실시간 도착정보 분석</button><div id="out" class="out">분석할 역을 선택한 뒤 버튼을 누르세요.</div><div id="tags"></div><h3>최근 분석 이력</h3><ul id="hist"></ul></aside>
+</main>
+<footer class="ft">Designed &amp; Developed by <span class="mono">차이나데이터큐레이션전공 조연우 · 202302367</span></footer>
+<div id="tip" class="tip" hidden></div>
+<script src="app.js"></script>
 </body>
 </html>
