@@ -43,26 +43,90 @@ app.get("/api/config-check", (req, res) => {
    SEOUL SUBWAY API
 ========================= */
 
+let subwayCache = null;
+let subwayCacheTime = 0;
+
 async function fetchSubwayData() {
   if (!SEOUL_API_KEY) {
     throw new Error("SEOUL_API_KEY is not configured");
   }
 
-  const url =
-    `http://swopenapi.seoul.go.kr/api/subway/` +
-    `${SEOUL_API_KEY}/json/realtimeStationArrival/0/100/`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Seoul API HTTP ${response.status}`);
+  // 30초 동안은 이미 받아온 전체 데이터를 재사용
+  if (
+    subwayCache &&
+    Date.now() - subwayCacheTime < 30000
+  ) {
+    return subwayCache;
   }
 
-  const data = await response.json();
+  const chunkSize = 100;
 
-  return data;
+  // 먼저 첫 100건을 가져와 전체 개수 확인
+  const firstUrl =
+    `http://swopenapi.seoul.go.kr/api/subway/` +
+    `${SEOUL_API_KEY}/json/realtimeStationArrival/0/${chunkSize}/`;
+
+  const firstResponse = await fetch(firstUrl);
+
+  if (!firstResponse.ok) {
+    throw new Error(`Seoul API HTTP ${firstResponse.status}`);
+  }
+
+  const firstData = await firstResponse.json();
+
+  const firstList = Array.isArray(firstData.realtimeArrivalList)
+    ? firstData.realtimeArrivalList
+    : [];
+
+  const totalCount =
+    Number(firstData.errorMessage?.total) ||
+    Number(firstList[0]?.totalCount) ||
+    firstList.length;
+
+  let allList = [...firstList];
+
+  // 나머지 데이터를 100건씩 추가로 가져오기
+  for (
+    let start = chunkSize;
+    start < totalCount;
+    start += chunkSize
+  ) {
+    const end = Math.min(start + chunkSize, totalCount);
+
+    const url =
+      `http://swopenapi.seoul.go.kr/api/subway/` +
+      `${SEOUL_API_KEY}/json/realtimeStationArrival/${start}/${end}/`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(
+        `Seoul API range failed: ${start}-${end}`
+      );
+      continue;
+    }
+
+    const data = await response.json();
+
+    const list = Array.isArray(data.realtimeArrivalList)
+      ? data.realtimeArrivalList
+      : [];
+
+    allList.push(...list);
+  }
+
+  subwayCache = {
+    errorMessage: {
+      ...(firstData.errorMessage || {}),
+      total: totalCount
+    },
+    realtimeArrivalList: allList
+  };
+
+  subwayCacheTime = Date.now();
+
+  return subwayCache;
 }
-
 /* =========================
    DEBUG
 ========================= */
