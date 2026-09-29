@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: aisubway
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: SEOUL_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
