@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 const SEOUL_API_KEY = process.env.SEOUL_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const CLAUDE_MODEL =
-  process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514";
+  process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
