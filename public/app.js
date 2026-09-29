@@ -1,6 +1,6 @@
 const LINES={1001:["1호선","#0052A4"],1002:["2호선","#00A84D"],1003:["3호선","#EF7C1C"],1004:["4호선","#00A5DE"],1005:["5호선","#996CAC"],1006:["6호선","#CD7C2F"],1007:["7호선","#747F00"],1008:["8호선","#E6186C"],1009:["9호선","#BDB092"],1063:["경의중앙선","#77C4A3"],1065:["공항철도","#0090D2"],1067:["경춘선","#178C72"],1075:["수인분당선","#F5A200"],1077:["신분당선","#D4003B"],1092:["우이신설선","#B0CE18"],1032:["GTX-A","#9A6292"]};
 const $=s=>document.querySelector(s),ln=t=>(LINES[t.subwayId]||["기타","#8aa0bd"])[0],lc=t=>(LINES[t.subwayId]||["기타","#8aa0bd"])[1];
-const S={trains:[],line:null,q:"",station:"강남",sort:["seconds",1],page:0,prev:new Map(),hover:null,stats:null},PER=15,BASE="#38bdf8";
+const S={trains:[],line:null,q:"",station:null,sort:["seconds",1],page:0,prev:new Map(),hover:null,stats:null},PER=15,BASE="#38bdf8";
 const fmt=s=>s>0?`${Math.floor(s/60)}분 ${String(s%60).padStart(2,"0")}초`:"N/A";
 const setAccent=c=>document.documentElement.style.setProperty("--active-line-color",c||BASE);
 const el=(t,a={},h="")=>Object.assign(document.createElement(t),a,{innerHTML:h});
@@ -15,8 +15,15 @@ async function load(){
   if(location.protocol==="file:"){$("#notice").hidden=false;$("#live").textContent="OFFLINE";$("#live").className="live err";render();return}
   $("#refresh").disabled=true;
   try{
-    const r=await fetch("/api/subway");if(!r.ok)throw 0;const d=await r.json();
-    S.trains=d.trains;$("#live").textContent="LIVE";$("#live").className="live";
+const r=await fetch("/api/subway");if(!r.ok)throw 0;const d=await r.json();
+
+S.trains=d.trains;
+
+if (!S.station && S.trains.length) {
+  S.station = S.trains[0].station;
+}
+
+$("#live").textContent="LIVE";$("#live").className="live";
     $("#upd").textContent=new Date(d.receivedAt).toLocaleTimeString("ko-KR");
   }catch{$("#live").textContent="DATA ERROR";$("#live").className="live err";$("#upd").textContent="실시간 데이터를 불러오지 못했습니다."}
   $("#refresh").disabled=false;render();
